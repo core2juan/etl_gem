@@ -1,11 +1,14 @@
+require 'csv'
+
 module EtlGem
   class CsvProcessor < Processor
+
     private
 
     def load_source
       @data = []
 
-      csv = CSV.read(path_to_file, headers: true)
+      csv = ::CSV.read(file_paths[:csv], headers: true)
 
       csv.each do |row|
         content = {}

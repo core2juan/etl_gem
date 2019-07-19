@@ -1,0 +1,18 @@
+{
+  "groups": [
+    {
+      "id": 1,
+      "name": "Group 1",
+      "relation_one_to_one": {
+        "id": 1,
+        "name": "Foo"
+      },
+      "relation_one_to_many": [
+        {
+          "id": 1,
+          "name": "Bar"
+        }
+      ]
+    }
+  ]
+}
