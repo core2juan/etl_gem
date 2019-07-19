@@ -1,6 +1,4 @@
-module EtlGem
- class Processor
-    def initialize
-    end
- end
-end
+require 'light-service'
+require 'csv'
+require 'etl/version'
+require 'etl/processor'
