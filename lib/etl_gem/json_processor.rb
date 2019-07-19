@@ -1,4 +1,5 @@
 require 'json'
+require 'active_support/core_ext/string/inflections'
 
 module EtlGem
   class JsonProcessor < Processor
@@ -10,34 +11,35 @@ module EtlGem
 
       files.each do |f|
         file = File.read(f)
-        @data.merge!(read_json(JSON.parse(file, symbolize_names: true)))
+        read_json(JSON.parse(file, symbolize_names: true))
       end
 
       @data
     end
 
     def read_json(json, reference = {})
-      content = {}
       json.each do |key, value|
         case value.class.to_s
         when 'Array'
-          content[key] = []
           value.each do |item|
-            content[key] << read_json(item, reference)
+            attributes = item.reject{ |k, v| [Hash, Array].include?(v.class) }
+            @data[key] ||= []
+            @data[key] << attributes.merge(reference)
+            inner_relations = item.select { |_k, v| [Hash, Array].include?(v.class) }
+            reference = { :"#{key.to_s.singularize}_id" => attributes[:id] } if attributes[:id]
+            inner_relations.keys.each do |relation_key|
+              read_json({ relation_key => inner_relations[relation_key] }, reference)
+            end
           end
         when 'Hash'
-          content[key] = {}
-          content[key] = reference
-          content[key].merge!(value.reject { |_k, v| [Hash, Array].include?(v.class) })
-
-          reference = { :"#{key}_id" => content[key][:id] } if content[key][:id]
-          content[key].merge!(
-            read_json(value.select { |_k, v| [Hash, Array].include?(v.class) }, reference)
-          )
+          attributes = value.reject{ |k, v| [Hash, Array].include?(v.class) }
+          @data[key] ||= []
+          @data[key] << attributes.merge(reference)
+          inner_relations = value.select { |_k, v| [Hash, Array].include?(v.class) }
+          reference = { :"#{key}_id" => attributes[:id] } if attributes[:id]
+          read_json(inner_relations, reference) if inner_relations.any?
         end
       end
-
-      content
     end
   end
 end
